@@ -7,29 +7,88 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
     <script src="firebaseConfig.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #4e008e;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #00a9e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+            text-align: center;
+        }
+        h1 {
+            color: #ffffff;
+        }
+        label, input, select, button {
+            font-size: 16px;
+            color: #4e008e;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background-color: #e93cac;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        button:hover {
+            background-color: #4e008e;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <h1>Calculadora de Carbono</h1>
-    <form id="carbonForm">
-        <label for="name">Nome:</label>
-        <input type="text" id="name" required>
-        
-        <label for="carDistance">Distância percorrida (km):</label>
-        <input type="number" id="carDistance" required>
-        
-        <label for="electricity">Consumo de eletricidade (kWh):</label>
-        <input type="number" id="electricity" required>
-        
-        <label for="fuelType">Tipo de combustível:</label>
-        <select id="fuelType" required>
-            <option value="2.3">Gasolina</option>
-            <option value="2.6">Diesel</option>
-            <option value="1.5">Etanol</option>
-        </select>
-        
-        <button type="button" onclick="submitData()">Enviar Dados</button>
-    </form>
+    <div class="container">
+        <h1>Calculadora de Carbono</h1>
+        <form id="carbonForm">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" placeholder="Ex: João" required>
+            
+            <label for="carDistance">Distância percorrida (km):</label>
+            <input type="number" id="carDistance" placeholder="Ex: 10000" required>
+            
+            <label for="electricity">Consumo de eletricidade (kWh):</label>
+            <input type="number" id="electricity" placeholder="Ex: 200" required>
+            
+            <label for="fuelType">Tipo de combustível:</label>
+            <select id="fuelType" required>
+                <option value="2.3">Gasolina</option>
+                <option value="2.6">Diesel</option>
+                <option value="1.5">Etanol</option>
+            </select>
+            
+            <button type="button" onclick="submitData()">Enviar Dados</button>
+        </form>
+        <div id="result"></div>
+    </div>
 
     <script>
         async function submitData() {
@@ -51,7 +110,7 @@
                 totalEmissions
             });
 
-            alert("Dados enviados com sucesso!");
+            document.getElementById("result").innerHTML = `<p>${name}, sua emissão total estimada é <strong>${totalEmissions.toFixed(2)} kg CO₂</strong>.</p>`;
             document.getElementById("carbonForm").reset();
         }
     </script>
