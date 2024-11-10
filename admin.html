@@ -7,24 +7,69 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
     <script src="firebaseConfig.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #4e008e;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #72c0a1;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #4e008e;
+            background-color: #ffffff;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #00a9e0;
+            color: #ffffff;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <h1>Administrador - Emissões de CO₂ dos Clientes</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Distância (km)</th>
-                <th>Eletricidade (kWh)</th>
-                <th>Tipo de Combustível</th>
-                <th>Emissões Totais (kg CO₂)</th>
-            </tr>
-        </thead>
-        <tbody id="clientTable">
-            <!-- Dados dos clientes serão inseridos aqui dinamicamente -->
-        </tbody>
-    </table>
+    <div class="container">
+        <h1>Administrador - Emissões de CO₂ dos Clientes</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Distância (km)</th>
+                    <th>Eletricidade (kWh)</th>
+                    <th>Tipo de Combustível</th>
+                    <th>Emissões Totais (kg CO₂)</th>
+                </tr>
+            </thead>
+            <tbody id="clientTable">
+                <!-- Dados dos clientes serão inseridos aqui dinamicamente -->
+            </tbody>
+        </table>
+    </div>
 
     <script>
         async function fetchClientData() {
