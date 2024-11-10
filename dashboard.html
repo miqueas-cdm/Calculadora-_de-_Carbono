@@ -8,11 +8,40 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="firebaseConfig.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #4e008e;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #72c0a1;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <h1>Dashboard de Emissões de CO₂</h1>
-    <canvas id="emissionChart" width="400" height="400"></canvas>
+    <div class="container">
+        <h1>Dashboard de Emissões de CO₂</h1>
+        <canvas id="emissionChart" width="400" height="400"></canvas>
+    </div>
 
     <script>
         async function generateChart() {
