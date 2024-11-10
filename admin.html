@@ -116,50 +116,59 @@
     </div>
 
     <script>
-        function fetchClientData() {
-            // Obtém dados do Local Storage
-            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
+        async function fetchClientData() {
+            try {
+                // Obtém dados da API
+                const response = await fetch('http://localhost:5000/api/emissions');
+                const clientData = await response.json();
 
-            // Inicializa variáveis para o total de emissões por tipo
-            let totalFuelEmissions = 0;
-            let totalElectricityEmissions = 0;
+                let totalFuelEmissions = 0;
+                let totalElectricityEmissions = 0;
 
-            // Popula a tabela de clientes com suas emissões totais
-            const clientTable = document.getElementById('clientTable');
-            clientTable.innerHTML = ''; // Limpa o conteúdo anterior
+                // Popula a tabela de clientes com suas emissões totais
+                const clientTable = document.getElementById('clientTable');
+                clientTable.innerHTML = ''; // Limpa o conteúdo anterior
 
-            clientData.forEach((client, index) => {
-                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
-                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
-                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
-                const totalEmissions = fuelEmissions + electricityEmissions;
+                clientData.forEach((client, index) => {
+                    const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+                    const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
+                    const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+                    const totalEmissions = fuelEmissions + electricityEmissions;
 
-                // Cria uma linha na tabela para cada cliente
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${client.name}</td>
-                    <td>${client.carDistance}</td>
-                    <td>${client.electricity}</td>
-                    <td>${client.fuelFactor == 2.3 ? 'Gasolina' : client.fuelFactor == 2.6 ? 'Diesel' : 'Etanol'}</td>
-                    <td>${totalEmissions.toFixed(2)} kg CO₂</td>
-                `;
-                clientTable.appendChild(row);
+                    // Cria uma linha na tabela para cada cliente
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${client.name}</td>
+                        <td>${client.carDistance}</td>
+                        <td>${client.electricity}</td>
+                        <td>${client.fuelFactor == 2.3 ? 'Gasolina' : client.fuelFactor == 2.6 ? 'Diesel' : 'Etanol'}</td>
+                        <td>${totalEmissions.toFixed(2)} kg CO₂</td>
+                    `;
+                    clientTable.appendChild(row);
 
-                // Atualiza os totais
-                totalFuelEmissions += fuelEmissions;
-                totalElectricityEmissions += electricityEmissions;
-            });
+                    // Atualiza os totais
+                    totalFuelEmissions += fuelEmissions;
+                    totalElectricityEmissions += electricityEmissions;
+                });
 
-            // Exibe o gráfico com os totais
-            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+                // Exibe o gráfico com os totais
+                generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+            }
         }
 
         function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
             const ctx = document.getElementById('totalCarbonChart').getContext('2d');
             
+            // Destroi o gráfico anterior, se existir
+            if (window.totalCarbonChart) {
+                window.totalCarbonChart.destroy();
+            }
+
             // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
-            new Chart(ctx, {
+            window.totalCarbonChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Combustível', 'Eletricidade'],
@@ -190,11 +199,15 @@
         }
 
         // Função para limpar dados do Local Storage
-        function clearData() {
+        async function clearData() {
             if (confirm("Tem certeza que deseja limpar todos os dados?")) {
-                localStorage.removeItem('clientData');
-                fetchClientData(); // Atualiza a página após limpar os dados
-                alert("Todos os dados foram limpos.");
+                try {
+                    await fetch('http://localhost:5000/api/emissions', { method: 'DELETE' });
+                    fetchClientData(); // Atualiza a página após limpar os dados
+                    alert("Todos os dados foram limpos.");
+                } catch (error) {
+                    console.error('Erro ao limpar dados:', error);
+                }
             }
         }
 
