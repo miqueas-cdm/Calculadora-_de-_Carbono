@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Emissões de CO₂</title>
     <style>
+        /* Estilos gerais */
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
@@ -12,8 +13,10 @@
             padding: 0;
             color: #4e008e;
         }
+
+        /* Container principal */
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 20px auto;
             padding: 20px;
             background-color: #72c0a1;
@@ -22,29 +25,37 @@
             color: #ffffff;
             text-align: center;
         }
-        h1 { color: #ffffff; }
-        .table-container { overflow-x: auto; margin-top: 20px; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            color: #4e008e;
-            background-color: #ffffff;
-            border-radius: 8px;
-        }
-        th, td {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background-color: #00a9e0;
+
+        /* Título */
+        h1 {
             color: #ffffff;
-            font-weight: bold;
         }
+
+        /* Gráfico */
         .chart-container {
             max-width: 100%;
             margin-top: 20px;
             padding: 10px;
+        }
+
+        /* Tabela de Índice */
+        .index-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #4e008e;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .index-container h2 {
+            text-align: center;
+            color: #4e008e;
+        }
+
+        .index-item {
+            margin-bottom: 10px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -52,86 +63,58 @@
 <body>
     <div class="container">
         <h1>Dashboard de Emissões de CO₂</h1>
-        <input type="file" id="uploadFile" accept=".txt" onchange="readFile(event)">
-
-        <!-- Tabela para exibir os dados dos clientes -->
-        <div class="table-container">
-            <table id="clientTable">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nome</th>
-                        <th>Distância (km)</th>
-                        <th>Eletricidade (kWh)</th>
-                        <th>Combustível</th>
-                        <th>Emissões Totais (kg CO₂)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Dados carregados do arquivo .txt aparecerão aqui -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Gráfico para exibir as emissões totais -->
+        
+        <!-- Gráfico de Pizza para Emissões Totais -->
         <div class="chart-container">
             <canvas id="totalCarbonChart"></canvas>
+        </div>
+
+        <!-- Índice de Emissões Individuais -->
+        <div class="index-container" id="indexContainer">
+            <h2>Pegada de Carbono por Pessoa</h2>
+            <div id="indexList"></div>
         </div>
     </div>
 
     <script>
-        function readFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const lines = e.target.result.split('\n');
-                    const tbody = document.querySelector('#clientTable tbody');
-                    tbody.innerHTML = ''; // Limpa dados anteriores
-                    let rowData = {};
-                    let totalFuelEmissions = 0;
-                    let totalElectricityEmissions = 0;
+        function fetchClientData() {
+            // Obtém dados do Local Storage
+            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
 
-                    lines.forEach((line, index) => {
-                        const [key, value] = line.split(':');
-                        if (key && value) rowData[key.trim()] = value.trim();
-                        if ((index + 1) % 5 === 0) {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${index / 5 + 1}</td>
-                                <td>${rowData['Nome']}</td>
-                                <td>${rowData['Distância']}</td>
-                                <td>${rowData['Eletricidade']}</td>
-                                <td>${rowData['Combustível']}</td>
-                                <td>${rowData['Emissões Totais']}</td>
-                            `;
-                            tbody.appendChild(row);
+            // Inicializa variáveis para o total de emissões por tipo
+            let totalFuelEmissions = 0;
+            let totalElectricityEmissions = 0;
 
-                            // Soma emissões totais para o gráfico
-                            const fuelEmission = parseFloat(rowData['Combustível']) * (parseFloat(rowData['Distância']) / 10);
-                            const electricityEmission = parseFloat(rowData['Eletricidade']) * 12 * 0.085; // Fator de emissão
-                            totalFuelEmissions += fuelEmission;
-                            totalElectricityEmissions += electricityEmission;
-                            rowData = {};
-                        }
-                    });
+            // Popula o índice de clientes com suas emissões totais
+            const indexList = document.getElementById('indexList');
+            indexList.innerHTML = ''; // Limpa o índice anterior
 
-                    generatePieChart(totalFuelEmissions, totalElectricityEmissions);
-                };
-                reader.readAsText(file);
-            }
+            clientData.forEach((client, index) => {
+                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
+                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+                const totalEmissions = fuelEmissions + electricityEmissions;
+
+                // Adiciona ao índice
+                const listItem = document.createElement('div');
+                listItem.className = 'index-item';
+                listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
+                indexList.appendChild(listItem);
+
+                // Atualiza os totais
+                totalFuelEmissions += fuelEmissions;
+                totalElectricityEmissions += electricityEmissions;
+            });
+
+            // Exibe o gráfico com os totais
+            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
         }
 
         function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
             const ctx = document.getElementById('totalCarbonChart').getContext('2d');
-
-            // Destroi o gráfico anterior, se existir
-            if (window.totalCarbonChart) {
-                window.totalCarbonChart.destroy();
-            }
-
-            // Cria o gráfico de pizza com emissões totais
-            window.totalCarbonChart = new Chart(ctx, {
+            
+            // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
+            new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Combustível', 'Eletricidade'],
@@ -153,13 +136,16 @@
                             display: true,
                             position: 'bottom',
                             labels: {
-                                color: '#4e008e'
+                                color: '#00000'
                             }
                         }
                     }
                 }
             });
         }
+
+        // Carrega os dados ao iniciar a página
+        window.onload = fetchClientData;
     </script>
 </body>
 </html>
