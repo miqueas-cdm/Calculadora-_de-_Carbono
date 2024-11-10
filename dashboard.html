@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Emissões de CO₂</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="firebaseConfig.js"></script>
     <style>
+        /* Estilos gerais */
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
-            color: #4e008e;
             margin: 0;
             padding: 0;
+            color: #4e008e;
         }
+
+        /* Container principal */
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -26,44 +25,104 @@
             color: #ffffff;
             text-align: center;
         }
-        @media (max-width: 600px) {
-            .container {
-                padding: 15px;
-                margin: 10px;
-            }
-            h1 {
-                font-size: 24px;
-            }
+
+        /* Título */
+        h1 {
+            color: #ffffff;
+        }
+
+        /* Gráfico */
+        .chart-container {
+            max-width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        /* Tabela de Índice */
+        .index-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #4e008e;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .index-container h2 {
+            text-align: center;
+            color: #4e008e;
+        }
+
+        .index-item {
+            margin-bottom: 10px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Dashboard de Emissões de CO₂</h1>
-        <canvas id="emissionChart" width="400" height="400"></canvas>
+        
+        <!-- Gráfico de Pizza para Emissões Totais -->
+        <div class="chart-container">
+            <canvas id="totalCarbonChart"></canvas>
+        </div>
+
+        <!-- Índice de Emissões Individuais -->
+        <div class="index-container" id="indexContainer">
+            <h2>Pegada de Carbono por Pessoa</h2>
+            <div id="indexList"></div>
+        </div>
     </div>
 
     <script>
-        async function generateChart() {
-            const querySnapshot = await database.collection("clientData").get();
+        function fetchClientData() {
+            // Obtém dados do Local Storage
+            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
 
+            // Inicializa variáveis para o total de emissões por tipo
             let totalFuelEmissions = 0;
             let totalElectricityEmissions = 0;
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                totalFuelEmissions += (data.carDistance / 10) * data.fuelType;
-                totalElectricityEmissions += data.electricity * 12 * 0.085;
+            // Popula o índice de clientes com suas emissões totais
+            const indexList = document.getElementById('indexList');
+            indexList.innerHTML = ''; // Limpa o índice anterior
+
+            clientData.forEach((client, index) => {
+                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
+                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+                const totalEmissions = fuelEmissions + electricityEmissions;
+
+                // Adiciona ao índice
+                const listItem = document.createElement('div');
+                listItem.className = 'index-item';
+                listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
+                indexList.appendChild(listItem);
+
+                // Atualiza os totais
+                totalFuelEmissions += fuelEmissions;
+                totalElectricityEmissions += electricityEmissions;
             });
 
-            const ctx = document.getElementById('emissionChart').getContext('2d');
+            // Exibe o gráfico com os totais
+            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+        }
+
+        function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
+            const ctx = document.getElementById('totalCarbonChart').getContext('2d');
+            
+            // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
             new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Combustível', 'Eletricidade'],
                     datasets: [{
                         data: [totalFuelEmissions, totalElectricityEmissions],
-                        backgroundColor: ['#00a9e0', '#e93cac']
+                        backgroundColor: ['#00a9e0', '#e93cac'],
+                        borderColor: ['#4e008e', '#4e008e'],
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -72,13 +131,21 @@
                         title: {
                             display: true,
                             text: 'Distribuição Total de Emissões de CO₂ por Fonte'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: '#00000'
+                            }
                         }
                     }
                 }
             });
         }
 
-        generateChart();
+        // Carrega os dados ao iniciar a página
+        window.onload = fetchClientData;
     </script>
 </body>
 </html>
