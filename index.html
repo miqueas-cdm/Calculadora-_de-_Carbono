@@ -14,7 +14,29 @@
             color: #4e008e;
             position: relative;
         }
-        
+
+        /* Menu de navegação */
+        .navbar {
+            background-color: #4e008e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+        }
+
+        .navbar a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            background-color: #e93cac;
+            border-radius: 5px;
+        }
+
         /* Container principal */
         .container {
             max-width: 600px;
@@ -89,6 +111,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
+    <!-- Menu de navegação -->
+    <div class="navbar">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#admin">Admin</a>
+    </div>
+
+    <!-- Conteúdo principal -->
     <div class="container">
         <h1>Calculadora de Carbono</h1>
         
