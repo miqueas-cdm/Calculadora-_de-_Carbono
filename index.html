@@ -148,36 +148,34 @@
     </div>
 
     <script>
-        function submitData() {
+        async function submitData() {
             const name = document.getElementById('name').value;
             const carDistance = parseFloat(document.getElementById('carDistance').value) || 0;
             const electricity = parseFloat(document.getElementById('electricity').value) || 0;
             const fuelFactor = parseFloat(document.getElementById('fuelType').value);
 
-            // Cálculo de emissões
-            const fuelEmissions = (carDistance / 10) * fuelFactor;
-            const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
-            const electricityEmissions = electricity * 12 * electricityEmissionFactor;
-            const totalEmissions = fuelEmissions + electricityEmissions;
+            const clientData = { name, carDistance, electricity, fuelFactor };
 
-            const clientData = { name, carDistance, electricity, fuelFactor, totalEmissions };
+            try {
+                const response = await fetch('http://localhost:5000/api/emissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(clientData),
+                });
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `${data.name}, sua emissão total estimada é <strong>${data.totalEmissions.toFixed(2)} kg CO₂</strong>.`;
+                generatePieChart(data.totalEmissions);
+            } catch (error) {
+                console.error('Erro:', error);
+            }
 
-            // Salva dados no Local Storage
-            const storedData = JSON.parse(localStorage.getItem('clientData')) || [];
-            storedData.push(clientData);
-            localStorage.setItem('clientData', JSON.stringify(storedData));
-
-            // Exibe o total de emissões e gera o gráfico
-            document.getElementById('result').innerHTML = `${name}, sua emissão total estimada é <strong>${totalEmissions.toFixed(2)} kg CO₂</strong>.`;
-            generatePieChart(fuelEmissions, electricityEmissions);
-            
-            // Limpa campos
+            // Limpa campos após envio
             document.getElementById('name').value = '';
             document.getElementById('carDistance').value = '';
             document.getElementById('electricity').value = '';
         }
 
-        function generatePieChart(fuelEmissions, electricityEmissions) {
+        function generatePieChart(totalEmissions) {
             const ctx = document.getElementById('personalCarbonChart').getContext('2d');
             
             // Destroi o gráfico anterior, se existir
@@ -191,7 +189,7 @@
                 data: {
                     labels: ['Combustível', 'Eletricidade'],
                     datasets: [{
-                        data: [fuelEmissions, electricityEmissions],
+                        data: [totalEmissions.fuelEmissions, totalEmissions.electricityEmissions],
                         backgroundColor: ['#00a9e0', '#e93cac'],
                         borderColor: ['#4e008e', '#4e008e'],
                         borderWidth: 1
