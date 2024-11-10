@@ -1,151 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Emissões de CO₂</title>
-    <style>
-        /* Estilos gerais */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-            margin: 0;
-            padding: 0;
-            color: #4e008e;
-        }
+<script>
+    function fetchClientData() {
+        const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
 
-        /* Container principal */
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #72c0a1;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            color: #ffffff;
-            text-align: center;
-        }
+        let totalFuelEmissions = 0;
+        let totalElectricityEmissions = 0;
 
-        /* Título */
-        h1 {
-            color: #ffffff;
-        }
+        const indexList = document.getElementById('indexList');
+        indexList.innerHTML = '';
 
-        /* Gráfico */
-        .chart-container {
-            max-width: 100%;
-            margin-top: 20px;
-            padding: 10px;
-        }
+        clientData.forEach((client, index) => {
+            const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+            const electricityEmissionFactor = 0.085;
+            const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+            const totalEmissions = fuelEmissions + electricityEmissions;
 
-        /* Tabela de Índice */
-        .index-container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
-            color: #4e008e;
-            text-align: left;
-            font-size: 16px;
-        }
+            const listItem = document.createElement('div');
+            listItem.className = 'index-item';
+            listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
+            indexList.appendChild(listItem);
 
-        .index-container h2 {
-            text-align: center;
-            color: #4e008e;
-        }
+            totalFuelEmissions += fuelEmissions;
+            totalElectricityEmissions += electricityEmissions;
+        });
 
-        .index-item {
-            margin-bottom: 10px;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <div class="container">
-        <h1>Dashboard de Emissões de CO₂</h1>
-        
-        <!-- Gráfico de Pizza para Emissões Totais -->
-        <div class="chart-container">
-            <canvas id="totalCarbonChart"></canvas>
-        </div>
+        generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+    }
 
-        <!-- Índice de Emissões Individuais -->
-        <div class="index-container" id="indexContainer">
-            <h2>Pegada de Carbono por Pessoa</h2>
-            <div id="indexList"></div>
-        </div>
-    </div>
-
-    <script>
-        function fetchClientData() {
-            // Obtém dados do Local Storage
-            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
-
-            // Inicializa variáveis para o total de emissões por tipo
-            let totalFuelEmissions = 0;
-            let totalElectricityEmissions = 0;
-
-            // Popula o índice de clientes com suas emissões totais
-            const indexList = document.getElementById('indexList');
-            indexList.innerHTML = ''; // Limpa o índice anterior
-
-            clientData.forEach((client, index) => {
-                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
-                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
-                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
-                const totalEmissions = fuelEmissions + electricityEmissions;
-
-                // Adiciona ao índice
-                const listItem = document.createElement('div');
-                listItem.className = 'index-item';
-                listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
-                indexList.appendChild(listItem);
-
-                // Atualiza os totais
-                totalFuelEmissions += fuelEmissions;
-                totalElectricityEmissions += electricityEmissions;
-            });
-
-            // Exibe o gráfico com os totais
-            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
-        }
-
-        function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
-            const ctx = document.getElementById('totalCarbonChart').getContext('2d');
-            
-            // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Combustível', 'Eletricidade'],
-                    datasets: [{
-                        data: [totalFuelEmissions, totalElectricityEmissions],
-                        backgroundColor: ['#00a9e0', '#e93cac'],
-                        borderColor: ['#4e008e', '#4e008e'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Distribuição Total de Emissões de CO₂ por Fonte'
-                        },
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                color: '#00000'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Carrega os dados ao iniciar a página
-        window.onload = fetchClientData;
-    </script>
-</body>
-</html>
+    window.onload = fetchClientData;
+</script>
