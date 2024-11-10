@@ -77,44 +77,53 @@
     </div>
 
     <script>
-        function fetchClientData() {
-            // Obtém dados do Local Storage
-            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
+        async function fetchClientData() {
+            try {
+                // Obtém dados da API
+                const response = await fetch('http://localhost:5000/api/emissions');
+                const clientData = await response.json();
 
-            // Inicializa variáveis para o total de emissões por tipo
-            let totalFuelEmissions = 0;
-            let totalElectricityEmissions = 0;
+                let totalFuelEmissions = 0;
+                let totalElectricityEmissions = 0;
 
-            // Popula o índice de clientes com suas emissões totais
-            const indexList = document.getElementById('indexList');
-            indexList.innerHTML = ''; // Limpa o índice anterior
+                // Popula o índice de clientes com suas emissões totais
+                const indexList = document.getElementById('indexList');
+                indexList.innerHTML = ''; // Limpa o índice anterior
 
-            clientData.forEach((client, index) => {
-                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
-                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
-                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
-                const totalEmissions = fuelEmissions + electricityEmissions;
+                clientData.forEach((client, index) => {
+                    const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+                    const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
+                    const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+                    const totalEmissions = fuelEmissions + electricityEmissions;
 
-                // Adiciona ao índice
-                const listItem = document.createElement('div');
-                listItem.className = 'index-item';
-                listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
-                indexList.appendChild(listItem);
+                    // Adiciona ao índice
+                    const listItem = document.createElement('div');
+                    listItem.className = 'index-item';
+                    listItem.innerHTML = `<strong>${index + 1}. ${client.name}</strong>: ${totalEmissions.toFixed(2)} kg CO₂`;
+                    indexList.appendChild(listItem);
 
-                // Atualiza os totais
-                totalFuelEmissions += fuelEmissions;
-                totalElectricityEmissions += electricityEmissions;
-            });
+                    // Atualiza os totais
+                    totalFuelEmissions += fuelEmissions;
+                    totalElectricityEmissions += electricityEmissions;
+                });
 
-            // Exibe o gráfico com os totais
-            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+                // Exibe o gráfico com os totais
+                generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+            }
         }
 
         function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
             const ctx = document.getElementById('totalCarbonChart').getContext('2d');
             
+            // Destroi o gráfico anterior, se existir
+            if (window.totalCarbonChart) {
+                window.totalCarbonChart.destroy();
+            }
+
             // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
-            new Chart(ctx, {
+            window.totalCarbonChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Combustível', 'Eletricidade'],
@@ -136,7 +145,7 @@
                             display: true,
                             position: 'bottom',
                             labels: {
-                                color: '#00000'
+                                color: '#000000'
                             }
                         }
                     }
