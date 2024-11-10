@@ -1,16 +1,15 @@
 // firebaseConfig.js
 
-// Substitua com sua configuração do Firebase
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID",
-    databaseURL: "SUA_DATABASE_URL"
+  apiKey: "AIzaSyCxy-NBdPSVjA-kO7TDiiG6kWw36A6PVEs",
+  authDomain: "calcarbono-3d5fd.firebaseapp.com",
+  projectId: "calcarbono-3d5fd",
+  storageBucket: "calcarbono-3d5fd.firebasestorage.app",
+  messagingSenderId: "1058586668417",
+  appId: "1:1058586668417:web:f6f9f717447ec5411acc80",
+  measurementId: "G-XFJZH8QJ3S"
 };
 
-// Inicialize o Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.firestore();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
