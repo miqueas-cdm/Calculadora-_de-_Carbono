@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrador - Emissões de CO₂</title>
     <style>
+        /* Estilos gerais */
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
@@ -12,6 +13,8 @@
             padding: 0;
             color: #4e008e;
         }
+
+        /* Container principal */
         .container {
             max-width: 800px;
             margin: 20px auto;
@@ -22,82 +25,181 @@
             color: #ffffff;
             text-align: center;
         }
-        h1 { color: #ffffff; }
-        .table-container { overflow-x: auto; margin-top: 20px; }
+
+        /* Título */
+        h1 {
+            color: #ffffff;
+        }
+
+        /* Botão de Limpar Dados */
+        .clear-btn {
+            background-color: #e93cac;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            background-color: #4e008e;
+        }
+
+        /* Tabela de Emissões */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 0 auto;
             color: #4e008e;
             background-color: #ffffff;
             border-radius: 8px;
         }
+
         th, td {
             padding: 12px 15px;
             border: 1px solid #ddd;
             text-align: left;
         }
+
         th {
             background-color: #00a9e0;
             color: #ffffff;
             font-weight: bold;
         }
+
+        /* Gráfico */
+        .chart-container {
+            max-width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Administrador - Emissões de CO₂ dos Clientes</h1>
-        <input type="file" id="uploadFile" accept=".txt" onchange="readFile(event)">
+        
+        <!-- Botão para Limpar Dados -->
+        <button class="clear-btn" onclick="clearData()">Limpar Dados</button>
 
+        <!-- Tabela de Emissões por Cliente -->
         <div class="table-container">
-            <table id="clientTable">
+            <table>
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Nome</th>
                         <th>Distância (km)</th>
                         <th>Eletricidade (kWh)</th>
-                        <th>Combustível</th>
+                        <th>Tipo de Combustível</th>
                         <th>Emissões Totais (kg CO₂)</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Dados carregados do arquivo .txt aparecerão aqui -->
+                <tbody id="clientTable">
+                    <!-- Dados dos clientes serão inseridos aqui dinamicamente -->
                 </tbody>
             </table>
+        </div>
+
+        <!-- Gráfico de Pizza para Emissões Totais -->
+        <div class="chart-container">
+            <canvas id="totalCarbonChart"></canvas>
         </div>
     </div>
 
     <script>
-        function readFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const lines = e.target.result.split('\n');
-                    const tbody = document.querySelector('#clientTable tbody');
-                    tbody.innerHTML = ''; // Limpa dados anteriores
-                    let rowData = {};
-                    lines.forEach((line, index) => {
-                        const [key, value] = line.split(':');
-                        if (key && value) rowData[key.trim()] = value.trim();
-                        if ((index + 1) % 5 === 0) {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${index / 5 + 1}</td>
-                                <td>${rowData['Nome']}</td>
-                                <td>${rowData['Distância']}</td>
-                                <td>${rowData['Eletricidade']}</td>
-                                <td>${rowData['Combustível']}</td>
-                                <td>${rowData['Emissões Totais']}</td>
-                            `;
-                            tbody.appendChild(row);
-                            rowData = {};
+        function fetchClientData() {
+            // Obtém dados do Local Storage
+            const clientData = JSON.parse(localStorage.getItem('clientData')) || [];
+
+            // Inicializa variáveis para o total de emissões por tipo
+            let totalFuelEmissions = 0;
+            let totalElectricityEmissions = 0;
+
+            // Popula a tabela de clientes com suas emissões totais
+            const clientTable = document.getElementById('clientTable');
+            clientTable.innerHTML = ''; // Limpa o conteúdo anterior
+
+            clientData.forEach((client, index) => {
+                const fuelEmissions = (client.carDistance / 10) * client.fuelFactor;
+                const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
+                const electricityEmissions = client.electricity * 12 * electricityEmissionFactor;
+                const totalEmissions = fuelEmissions + electricityEmissions;
+
+                // Cria uma linha na tabela para cada cliente
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${client.name}</td>
+                    <td>${client.carDistance}</td>
+                    <td>${client.electricity}</td>
+                    <td>${client.fuelFactor == 2.3 ? 'Gasolina' : client.fuelFactor == 2.6 ? 'Diesel' : 'Etanol'}</td>
+                    <td>${totalEmissions.toFixed(2)} kg CO₂</td>
+                `;
+                clientTable.appendChild(row);
+
+                // Atualiza os totais
+                totalFuelEmissions += fuelEmissions;
+                totalElectricityEmissions += electricityEmissions;
+            });
+
+            // Exibe o gráfico com os totais
+            generatePieChart(totalFuelEmissions, totalElectricityEmissions);
+        }
+
+        function generatePieChart(totalFuelEmissions, totalElectricityEmissions) {
+            const ctx = document.getElementById('totalCarbonChart').getContext('2d');
+            
+            // Cria um gráfico de pizza para mostrar as emissões totais de CO₂ por tipo
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Combustível', 'Eletricidade'],
+                    datasets: [{
+                        data: [totalFuelEmissions, totalElectricityEmissions],
+                        backgroundColor: ['#00a9e0', '#e93cac'],
+                        borderColor: ['#4e008e', '#4e008e'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição Total de Emissões de CO₂ por Fonte'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff'
+                            }
                         }
-                    });
-                };
-                reader.readAsText(file);
+                    }
+                }
+            });
+        }
+
+        // Função para limpar dados do Local Storage
+        function clearData() {
+            if (confirm("Tem certeza que deseja limpar todos os dados?")) {
+                localStorage.removeItem('clientData');
+                fetchClientData(); // Atualiza a página após limpar os dados
+                alert("Todos os dados foram limpos.");
             }
         }
+
+        // Carrega os dados ao iniciar a página
+        window.onload = fetchClientData;
     </script>
 </body>
 </html>
