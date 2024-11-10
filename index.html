@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Carbono - Cliente</title>
     <style>
+        /* Estilos gerais */
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
@@ -13,6 +14,8 @@
             color: #4e008e;
             position: relative;
         }
+
+        /* Menu de navegação */
         .navbar {
             background-color: #4e008e;
             padding: 10px;
@@ -21,12 +24,20 @@
             align-items: center;
             color: #ffffff;
         }
+
         .navbar a {
             color: #ffffff;
             text-decoration: none;
             padding: 10px 15px;
             font-weight: bold;
         }
+
+        /* Oculta os botões Admin e Dashboard */
+        .navbar a.hidden {
+            display: none;
+        }
+
+        /* Container principal */
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -37,13 +48,20 @@
             color: #ffffff;
             text-align: center;
         }
-        h1 { color: #ffffff; }
+
+        /* Título */
+        h1 {
+            color: #ffffff;
+        }
+
+        /* Label e inputs */
         label {
             display: block;
             margin-top: 15px;
             font-weight: bold;
             color: #ffffff;
         }
+
         input[type="text"],
         input[type="number"],
         select {
@@ -56,6 +74,8 @@
             box-sizing: border-box;
             color: #4e008e;
         }
+
+        /* Botão */
         button {
             width: 100%;
             padding: 12px;
@@ -68,17 +88,37 @@
             font-size: 18px;
             font-weight: bold;
         }
-        button:hover { background-color: #4e008e; }
+
+        button:hover {
+            background-color: #4e008e;
+        }
+
+        /* Resultado */
         .result {
             margin-top: 20px;
             font-size: 1.2em;
             font-weight: bold;
             color: #4e008e;
         }
+
+        /* Container do gráfico */
+        .chart-container {
+            max-width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
+    <!-- Menu de navegação -->
+    <div class="navbar">
+        <a href="dashboard.html" class="hidden">Dashboard</a>
+        <a href="admin.html" class="hidden">Admin</a>
+    </div>
+
+    <!-- Conteúdo principal -->
     <div class="container">
         <h1>Calculadora de Carbono</h1>
         
@@ -101,6 +141,10 @@
         <button onclick="submitData()">Enviar Dados</button>
         
         <div class="result" id="result"></div>
+        
+        <div class="chart-container">
+            <canvas id="personalCarbonChart"></canvas>
+        </div>
     </div>
 
     <script>
@@ -110,29 +154,59 @@
             const electricity = parseFloat(document.getElementById('electricity').value) || 0;
             const fuelFactor = parseFloat(document.getElementById('fuelType').value);
 
+            // Cálculo de emissões
             const fuelEmissions = (carDistance / 10) * fuelFactor;
-            const electricityEmissionFactor = 0.085;
+            const electricityEmissionFactor = 0.085; // kg CO₂ por kWh
             const electricityEmissions = electricity * 12 * electricityEmissionFactor;
             const totalEmissions = fuelEmissions + electricityEmissions;
 
-            const clientData = `Nome: ${name}\nDistância: ${carDistance}\nEletricidade: ${electricity}\nCombustível: ${fuelFactor}\nEmissões Totais: ${totalEmissions.toFixed(2)} kg CO₂`;
+            const clientData = { name, carDistance, electricity, fuelFactor, totalEmissions };
 
-            downloadFile(clientData, 'dados_cliente.txt');
+            // Salva dados no Local Storage
+            const storedData = JSON.parse(localStorage.getItem('clientData')) || [];
+            storedData.push(clientData);
+            localStorage.setItem('clientData', JSON.stringify(storedData));
 
+            // Exibe o total de emissões e gera o gráfico
             document.getElementById('result').innerHTML = `${name}, sua emissão total estimada é <strong>${totalEmissions.toFixed(2)} kg CO₂</strong>.`;
-
+            generatePieChart(fuelEmissions, electricityEmissions);
+            
+            // Limpa campos
             document.getElementById('name').value = '';
             document.getElementById('carDistance').value = '';
             document.getElementById('electricity').value = '';
         }
 
-        function downloadFile(content, fileName) {
-            const blob = new Blob([content], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            link.click();
-            URL.revokeObjectURL(link.href);
+        function generatePieChart(fuelEmissions, electricityEmissions) {
+            const ctx = document.getElementById('personalCarbonChart').getContext('2d');
+            
+            // Destroi o gráfico anterior, se existir
+            if (window.personalCarbonChart) {
+                window.personalCarbonChart.destroy();
+            }
+
+            // Cria novo gráfico de pizza
+            window.personalCarbonChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Combustível', 'Eletricidade'],
+                    datasets: [{
+                        data: [fuelEmissions, electricityEmissions],
+                        backgroundColor: ['#00a9e0', '#e93cac'],
+                        borderColor: ['#4e008e', '#4e008e'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição de Emissões de CO₂'
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
